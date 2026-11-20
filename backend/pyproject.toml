@@ -1,0 +1,84 @@
+[project]
+name = "satellite-object-detection-backend"
+version = "0.1.0"
+description = "Satellite Object Detection – satellite imagery analysis API"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.165.0",
+    "uvicorn[standard]==0.54.0",
+    "pydantic-settings==2.16.3",
+    "sqlalchemy[asyncio]==2.1.9",
+    "asyncpg==0.32.0",
+    "alembic==1.20.1",
+    "geoalchemy2==0.21.0",
+    "rasterio==1.5.2",
+    "rio-tiler==9.4.13",
+    "shapely==2.2.0",
+    "pyproj==3.8.0",
+    "python-multipart==0.0.34",
+    # Computer vision. Ultralytics (YOLO) is AGPL-3.0 licensed.
+    "torch==2.15.0",
+    "torchvision==0.29.2",
+    "ultralytics==8.4.215",
+    "opencv-python==5.1.0.95",
+    "boto3==1.44.7",
+    "kombu==5.7.0",
+    "celery==5.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.2.0",
+    "pytest-asyncio==1.5.0",
+    "httpx==0.28.1",
+    "ruff==0.17.6",
+    "mypy==2.4.1",
+    "boto3-stubs[s3]==1.44.6",
+]
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF"]
+
+[tool.ruff.lint.isort]
+# backend/alembic/ holds migrations; the import name refers to the library.
+known-third-party = ["alembic"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg.*", "rasterio.*", "shapely.*", "affine.*", "cv2.*", "torch.*", "celery.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Celery's decorators and signals are untyped.
+module = ["app.worker.tasks"]
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+# Partially typed packages; treat as untyped instead of type-checking their internals.
+module = ["ultralytics.*", "kombu.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

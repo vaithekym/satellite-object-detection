@@ -1,0 +1,27 @@
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Local data (MinIO storage, sample imagery, model weights)
+data/
+*.pt
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
