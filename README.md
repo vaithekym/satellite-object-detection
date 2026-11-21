@@ -110,6 +110,71 @@ S3-compatible store (for example `brew install seaweedfs`) and set `S3_ENDPOINT_
 <http://localhost:5173>. You can also upload your own GeoTIFFs on **Bilder** and analyse them on
 **Analyse**. Configuration and troubleshooting are covered in [docs/development.md](docs/development.md).
 
+## Linux and Windows
+
+> Only macOS has been tested. These instructions should work, but they have not been verified.
+
+### Linux (Ubuntu 24.04 / Debian)
+
+Install the system packages. Ubuntu 24.04 ships PostgreSQL 16, which works as well as 17.
+
+```bash
+sudo apt update
+sudo apt install -y git make python3.12 python3.12-venv postgresql postgis rabbitmq-server
+sudo systemctl enable --now postgresql rabbitmq-server
+
+# Node.js 24 (the apt version is too old), via nvm:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc && nvm install 24
+```
+
+MinIO is not available through apt and no longer publishes prebuilt binaries. Choose one:
+
+- Build it with Go: `go install github.com/minio/minio@latest` (requires a recent Go), then add
+  `~/go/bin` to `PATH` so that `make minio` finds it.
+- Use another S3-compatible store, such as SeaweedFS or Garage, and set `S3_ENDPOINT_URL` in
+  `.env` (then `make minio` is not used).
+- If Docker is acceptable on that machine, run this from the project folder after `.env` exists:
+
+  ```bash
+  set -a && . ./.env && set +a
+  docker run -d -p 127.0.0.1:9000:9000 -e MINIO_ROOT_USER="$S3_ACCESS_KEY" \
+    -e MINIO_ROOT_PASSWORD="$S3_SECRET_KEY" minio/minio server /data
+  ```
+
+Then follow the macOS quick start from `git clone` onwards, with these differences:
+
+```bash
+python3.12 -m venv .venv          # instead of $(brew --prefix)/bin/python3.12
+
+# sed -i without '' on Linux
+sed -i -e "s|satellite_detection:change-me@|satellite_detection:$DBPW@|g" \
+       -e "s|^S3_SECRET_KEY=.*|S3_SECRET_KEY=$S3PW|" .env
+
+# The PostgreSQL superuser is "postgres" on Linux, so prefix the database commands with sudo -u postgres:
+sudo -u postgres psql -c "CREATE ROLE satellite_detection LOGIN PASSWORD '$DBPW';"
+sudo -u postgres createdb --owner satellite_detection satellite_detection
+sudo -u postgres createdb --owner satellite_detection satellite_detection_test
+sudo -u postgres psql -d satellite_detection -c "CREATE EXTENSION postgis;"
+sudo -u postgres psql -d satellite_detection_test -c "CREATE EXTENSION postgis;"
+```
+
+Steps 2 and 3 (`make minio`, `make backend`, `make worker`, `make frontend`, `make init-storage`,
+`make demo`) are the same.
+
+### Windows
+
+The project is not supported directly on Windows: the Makefile and shell commands need a Unix
+environment, and Celery's default worker pool does not run on Windows. Use WSL2 instead:
+
+1. In PowerShell as administrator: `wsl --install -d Ubuntu-24.04`, then restart the machine.
+2. Open the Ubuntu terminal and follow the Linux instructions above inside WSL.
+3. Clone the project inside the Linux file system (for example `~/satellite-object-detection`),
+   not under `/mnt/c/…`, which is much slower.
+4. Open <http://localhost:5173> in the Windows browser. WSL2 forwards `localhost` automatically.
+
+To edit the code, use VS Code with the WSL extension.
+
 ## Tests
 
 ```bash

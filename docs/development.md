@@ -1,8 +1,8 @@
 # Development
 
-Everything runs natively. The project was developed on macOS (Apple Silicon) with Homebrew. Linux
-works with equivalent packages: the Python and npm dependencies are platform-independent, and the
-system services are standard.
+Everything runs natively. The project was developed and tested on macOS (Apple Silicon) with
+Homebrew. For Linux and Windows (WSL2), see the README section
+[Linux and Windows](../README.md#linux-and-windows). Those instructions have not been verified.
 
 ## Requirements
 
