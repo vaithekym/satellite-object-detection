@@ -20,6 +20,7 @@ Disk: about 3 GB for Python packages (PyTorch) and node_modules.
 ## Setup
 
 ```bash
+brew link --force postgresql@17   # keg-only formula: puts psql, createdb etc. on PATH
 brew services start postgresql@17
 brew services start rabbitmq
 
@@ -79,8 +80,14 @@ line.
 
 ## Loading sample imagery
 
-`make samples` downloads small, real windows of public imagery into `data/samples/` (see
-[../datasets/README.md](../datasets/README.md)). Upload them on the **Bilder** page, or:
+With the API and a worker running, `make init-storage` (once) and then **`make demo`** load the demo
+data: the sample images are downloaded if missing, uploaded through the API and analysed. Every
+machine gets identical results, because the sample sources are pinned STAC items and the model
+weights are checksum-verified. Running `make demo` again skips what already exists. Point it at
+another API with `API_URL=http://host:port make demo`.
+
+`make samples` only downloads the images into `data/samples/` (see
+[../datasets/README.md](../datasets/README.md)). To upload one manually:
 
 ```bash
 curl -F "file=@data/samples/naip_lax_2024.tif" http://127.0.0.1:8000/api/v1/images/upload
@@ -119,6 +126,7 @@ Model evaluation: `make evaluate` (see [ml-pipeline.md](ml-pipeline.md)).
 
 | Problem | Fix |
 |---|---|
+| `psql: command not found` | `brew link --force postgresql@17` (the versioned formula is keg-only) |
 | `brew install minio/stable/minio` fails with HTTP 410 | MinIO no longer publishes binaries there. Use `brew install minio` (Homebrew's own, deprecated build) or any S3-compatible store such as SeaweedFS, and set `S3_ENDPOINT_URL`. |
 | `/health/ready` reports that the bucket does not exist | `make init-storage` (with MinIO running) |
 | Migration fails: "PostGIS missing" | `psql -d satellite_detection -c "CREATE EXTENSION postgis;"` as your superuser |

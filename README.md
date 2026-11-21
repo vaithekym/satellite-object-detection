@@ -56,26 +56,38 @@ Details: [docs/architecture.md](docs/architecture.md).
 
 ## Quick start (macOS)
 
-Requires [Homebrew](https://brew.sh) and Node.js 24. Everything runs natively; Docker is not used.
+Requires [Homebrew](https://brew.sh). Everything runs natively; Docker is not used. The repository
+is private, so you need to have been given access to clone it.
+
+**1. Install and set up (once).** Run the database block in a single terminal window, because
+the generated password is reused across its lines.
 
 ```bash
-brew install python@3.12 postgresql@17 postgis rabbitmq minio
+brew install git node python@3.12 postgresql@17 postgis rabbitmq minio
+brew link --force postgresql@17   # postgresql@17 is keg-only: puts psql and createdb on PATH
 brew services start postgresql@17 && brew services start rabbitmq
 
-/opt/homebrew/bin/python3.12 -m venv .venv
+git clone https://github.com/vaithekym/satellite-object-detection.git
+cd satellite-object-detection
+$(brew --prefix)/bin/python3.12 -m venv .venv
 .venv/bin/pip install -e "backend[dev]"
 (cd frontend && npm install)
 
-cp .env.example .env    # then replace the change-me values
-
-createuser --pwprompt satellite_detection   # same password as in DATABASE_URL
+# Configuration with random passwords, and the database
+cp .env.example .env && chmod 600 .env
+DBPW=$(openssl rand -hex 16); S3PW=$(openssl rand -hex 16)
+sed -i '' -e "s|satellite_detection:change-me@|satellite_detection:$DBPW@|g" \
+          -e "s|^S3_SECRET_KEY=.*|S3_SECRET_KEY=$S3PW|" .env
+psql -d postgres -c "CREATE ROLE satellite_detection LOGIN PASSWORD '$DBPW';"
 createdb --owner satellite_detection satellite_detection
+createdb --owner satellite_detection satellite_detection_test   # for the integration tests
 psql -d satellite_detection -c "CREATE EXTENSION postgis;"
+psql -d satellite_detection_test -c "CREATE EXTENSION postgis;"
 make migrate
-make model samples      # model weights and sample imagery
+make model      # detector weights (checksum-verified)
 ```
 
-Run each in its own terminal, and run `make init-storage` once after MinIO has started:
+**2. Start the services**, each in its own terminal:
 
 ```bash
 make minio      # object storage
@@ -84,9 +96,19 @@ make worker     # analysis jobs
 make frontend   # UI on http://localhost:5173
 ```
 
-Upload a file from `data/samples/` on **Bilder**, open it on **Analyse**, and click
-**Finn objekter i bildet**. The test database, configuration and troubleshooting are covered in
-[docs/development.md](docs/development.md).
+**3. Load the demo data (once).** With the services running:
+
+```bash
+make init-storage   # create the storage bucket
+make demo           # download the sample images, upload them and analyse them (about 1 minute)
+```
+
+Homebrew's MinIO formula is deprecated and will be disabled on 2027-02-17. After that, use any
+S3-compatible store (for example `brew install seaweedfs`) and set `S3_ENDPOINT_URL` in `.env`.
+
+`make demo` gives every machine the same six images and the same detections (440 objects). Open
+<http://localhost:5173>. You can also upload your own GeoTIFFs on **Bilder** and analyse them on
+**Analyse**. Configuration and troubleshooting are covered in [docs/development.md](docs/development.md).
 
 ## Tests
 

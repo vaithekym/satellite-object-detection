@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import get_settings
@@ -46,7 +47,13 @@ def test_database_url() -> str:
 def migrated_database(test_database_url: str) -> Iterator[str]:
     """Wipe the test database, then migrate to head (also exercises downgrade)."""
     config = alembic_config(test_database_url)
-    command.downgrade(config, "base")
+    try:
+        command.downgrade(config, "base")
+    except (OSError, SQLAlchemyError) as exc:
+        if "does not exist" in str(exc) or isinstance(exc, OSError):
+            reason = f"test database unavailable ({type(exc).__name__})"
+            pytest.skip(f"{reason}; see docs/development.md")
+        raise
     command.upgrade(config, "head")
     yield test_database_url
 

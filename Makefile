@@ -1,7 +1,7 @@
 VENV := $(CURDIR)/.venv/bin
 MINIO_DATA := $(CURDIR)/data/minio
 
-.PHONY: minio init-storage migrate samples model detect evaluate worker backend frontend test test-backend test-frontend lint
+.PHONY: minio init-storage migrate samples model demo detect evaluate worker backend frontend test test-backend test-frontend lint
 
 # MinIO bound to localhost only, data stored inside the project (git-ignored).
 minio:
@@ -27,6 +27,10 @@ model:
 	@mkdir -p data/models
 	curl -sSL -o data/models/yolo26s-obb.pt $(MODEL_URL)
 	echo "$(MODEL_SHA256)  data/models/yolo26s-obb.pt" | shasum -a 256 -c -
+
+# Demo data: upload the sample images and analyse them (needs backend + worker running).
+demo:
+	cd backend && $(VENV)/python -m scripts.seed_demo
 
 # Run object detection on an uploaded image without the queue: make detect IMAGE=<image id>
 detect:
