@@ -18,20 +18,6 @@ The objective is to build a production-oriented, modular application that demons
 - Containerization and Kubernetes
 - Security, observability, testing, and CI/CD
 
-**IMPORTANT FOR THE IMPLEMENTING AI AGENT:**
-
-You are responsible for implementing the actual application, not merely describing how it could be implemented.
-
-Create all necessary source files, configuration files, database migrations, Dockerfiles, tests, scripts, and documentation.
-
-Do not use placeholder implementations, fake inference results, hardcoded detections, or simulated processing in the production application.
-
-Work incrementally, verify each phase, fix errors, and continue until the application is functional.
-
-If an external dependency, model, dataset, or infrastructure service is unavailable, explain the limitation and implement a working alternative where possible.
-
-Do not claim functionality is complete unless it has been implemented and tested.
-
 ---
 
 # 2. Primary Objectives

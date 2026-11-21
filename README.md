@@ -206,6 +206,8 @@ labelled sample is small and comes from the model's own training data. See
 
 ## Licences and data
 
+This project is licensed under the **GNU Affero General Public License v3.0** (see [LICENSE](LICENSE)).
+
 - **Ultralytics YOLO is AGPL-3.0.** Distributing this application, or offering it as a network
   service, brings AGPL obligations.
 - The model weights are trained on **DOTA**, which is for academic use only.
